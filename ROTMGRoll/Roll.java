@@ -8,7 +8,7 @@ package ROTMGRoll;
  */
 class Roll extends AbstractRoll {
 
-    private double pct; //unused: % to get specifically this value
+    private double pct; //% to get specifically this value
     private double oneInX; //unused: odds to get specifically this value
     private double worsePct; // % chance to get a roll worse than this
     private double worseOneInX;  // odds to get a roll worse OR EQUAL than this

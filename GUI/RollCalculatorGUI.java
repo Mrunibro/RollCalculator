@@ -6,21 +6,26 @@ import ROTMGRoll.CompositeRoll;
 import ROTMGRoll.RollCalculator;
 
 import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.io.IOException;
 import java.util.ArrayList;
 
-public class RollCalculatorGUI implements ItemListener {
+public class RollCalculatorGUI {
 
-    private NumberPresenter presenter;
+    private final NumberPresenter presenter;
 
     private CompositeRoll compositeRoll;
 
     private ArrayList<String> includedRolls;
     private ArrayList<String> chosenCharacters;
 
-    private static JFrame frame = new JFrame("ROTMG Roll Calculator");
-    private RollCalcGUIManager gui;
+    private boolean settingsUseNumberPresenter = true;
+    private boolean settingsClearRollsAfterShow = true;
+
+    private final String bottomRollsLabelStartText = "Your rolls: ";
+    private final static String VERSION = "1.0.0"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
+    private static JFrame frame = new JFrame("RotMG Roll Calculator " + VERSION);
+
+    private final RollCalcGUIManager gui;
 
     private JComboBox characterLevel;
     private JButton whatAreTheOddsButton;
@@ -32,10 +37,6 @@ public class RollCalculatorGUI implements ItemListener {
     private JButton clearLastEntry;
     private JButton clearAllEnteredRollsButton;
     private JLabel bottomRollsLabel;
-
-    private String bottomRollsLabelStartText = "Your rolls: ";
-    private boolean settingsUseNumberPresenter = true;
-    private boolean settingsClearRollsAfterShow = true;
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -58,7 +59,7 @@ public class RollCalculatorGUI implements ItemListener {
         bottomRollsLabel.setText(bottomRollsLabelStartText);
         //initialize gui elements
         gui = new RollCalcGUIManager();
-        gui.initialize(this);
+        gui.initialize();
         //Calculates roll statistics with RollCalculator.
         whatAreTheOddsButton.addActionListener(e -> {
             addToRollsList();
@@ -286,36 +287,17 @@ public class RollCalculatorGUI implements ItemListener {
     }
 
     /**
-     * One of the settings checkboxes was changed
-     * @param e the change-event
-     */
-    public void itemStateChanged(ItemEvent e) {
-        String settingName = ((JCheckBoxMenuItem) e.getItem()).getName();
-        boolean toChange = ((JCheckBoxMenuItem)e.getItem()).getState();
-        //could probably just negate the state. nyeh.
-        switch (settingName){
-            case "UseNumberPresenter":
-                settingsUseNumberPresenter = toChange;
-                break;
-            case "ClearRollsAfterShow":
-                settingsClearRollsAfterShow = toChange;
-                break;
-            default: break;
-        }
-    }
-
-    /**
      * This inner class manages anything that will bee displayed on the GUI
      * Whenever something has to get displayed,
      * a method in this class should bee responsible for the 'displaying' aspect of the task
      */
     private class RollCalcGUIManager {
         /**
-         * Initialize components
+         * Initialize gui components
          */
-        void initialize(ItemListener parent) {
+        void initialize() {
             //(manually) create menubar - IntelliJ form designer doesn't support menubars?
-            createMenuBar(parent);
+            createMenuBar();
             //place values in comboboxes
             initCharacterLevel();
             initCharacterClass();
@@ -400,6 +382,8 @@ public class RollCalculatorGUI implements ItemListener {
                 characterStatAmount.addItem(i);
             }
             characterStatAmount.setSelectedIndex(characterStatAmount.getItemCount() / 2); //select middle item (avg)
+
+            frame.pack(); //sometimes the magnitude of stats changes horizontal size (e.g. single digit def to triple digit hp)
         }
 
         /**
@@ -441,14 +425,16 @@ public class RollCalculatorGUI implements ItemListener {
         }
 
         /**
-         * Initialize the menu bar
-         * @param parent ItemListener used by menu items to handle events
+         * Initialize the menu bar.
+         * Has to bee manually created unlike other components due to the way IntelliJ does forms
          */
-        private void createMenuBar(ItemListener parent){
+        private void createMenuBar(){
             JMenuBar menuBar;
             JMenu menu;
             JMenuItem menuItem;
             JCheckBoxMenuItem checkBox;
+            final JCheckBoxMenuItem finalForLambda1;
+            final JCheckBoxMenuItem finalForLambda2;
 
             menuBar = new JMenuBar();
             menu = new JMenu("Settings");
@@ -456,21 +442,80 @@ public class RollCalculatorGUI implements ItemListener {
 
             checkBox = new JCheckBoxMenuItem("Empty Roll List after computing odds");
             checkBox.setState(true);
-            checkBox.addItemListener(parent);
+
+            finalForLambda1 = checkBox;
+            checkBox.addItemListener((e) -> settingsClearRollsAfterShow = finalForLambda1.getState());
+
             checkBox.setName("ClearRollsAfterShow");
             menu.add(checkBox);
             checkBox = new JCheckBoxMenuItem("Post-process roll statistics for present-ability");
             checkBox.setState(true);
-            checkBox.addItemListener(parent);
             checkBox.setName("UseNumberPresenter");
+
+            finalForLambda2 = checkBox;
+            checkBox.addItemListener((e) -> settingsUseNumberPresenter = finalForLambda2.getState());
+
             menu.add(checkBox);
 
             menu = new JMenu("About");
-            menuItem = new JMenuItem("TODO");
+            menuItem = new JMenuItem("GitHub page");
+            menuItem.addActionListener((e) -> {
+                if (JOptionPane.showConfirmDialog(null, "You are about to open a link to GitHub, continue?", "Continue to GitHub?", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    openWebPage("https://github.com/Mrunibro/RollCalculator");
+                }
+            });
             menu.add(menuItem);
+            menu.addSeparator();
+            menuItem = new JMenuItem("Tool information & How to use");
+            String msg = "RotMG Roll Calculator. Version: " + VERSION + " ©Mrunibro\n\n" +
+                    "This tool Calculates any and all rolls your RotMG Characters can get.\n\n" +
+                    "To use, enter your characters' level, class, stat and how many points in the stat you have.\n" +
+                    "When you click \"Show me the odds!\", you will see a message containing \n" +
+                    "any relevant roll data the program could think of.\n\n" +
+                    "If you want to calculate multiple rolls at once (For example, a +10HP but -25MP roll), \n" +
+                    "use the smaller \"Enter this roll, and add another roll\" button instead. \n" +
+                    "You can then enter another roll (as many as you like!) until you choose to be shown the odds.\n\n" +
+                    "At any time, you can keep track of which rolls you entered by looking at the small text at the bottom.\n" +
+                    "If you made a mistake when entering one of your rolls, use the removal buttons on the UI.\n" +
+                    "Finally, bee sure to check out the available customization under 'Settings'!\n\n" +
+                    "Happy rolling ;)";
+            menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, msg,"Tool Info", JOptionPane.INFORMATION_MESSAGE));
+            menu.add(menuItem);
+            menuItem = new JMenuItem("Report a bug");
+            String bugMsg = "Have you encountered a problem with the tool? Or would you like to give feedback?\n\nFeel free to contact me on one of the following platforms:\n\n" +
+                    "GitHub: use the 'GitHub' option in this menu to navigate directly to this tool's page." +
+                    "\nReddit: /u/Mrunibro" +
+                    "\nDiscord: @Mrunibro#4022";
+            menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, bugMsg, "Contacting the developer", JOptionPane.INFORMATION_MESSAGE));
+            menu.add(menuItem);
+            menu.addSeparator();
+            menuItem = new JMenuItem("Donate");
+            String donMsg = "Are you exceptionally satisfied with this tool?\n\n" +
+                    "What matters the most to me is that everyone enjoys this tool, And I expect nothing of you in return.\n\n" +
+                    "If you wish to show extra support nonetheless, it is very highly appreciated!";
+            menuItem.addActionListener((e) -> {
+                if (JOptionPane.showConfirmDialog(null, donMsg, "Donate information", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    openWebPage("https://www.paypal.me/ROTMGRollCalculator");
+                }
+            });
+            menu.add(menuItem);
+
             menuBar.add(menu);
 
             frame.setJMenuBar(menuBar);
+        }
+
+        /**
+         * Opens the web browser with the specified URL
+         * @param url the URL to try and open.
+         */
+        private void openWebPage(String url){
+            try {
+                java.awt.Desktop.getDesktop().browse(java.net.URI.create(url));
+            } catch (IOException e1) {
+                JOptionPane.showMessageDialog(null, "Encountered an error loading this page:\n" + url, "Error loading page", JOptionPane.ERROR_MESSAGE);
+                e1.printStackTrace();
+            }
         }
     }
 }
