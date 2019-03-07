@@ -74,11 +74,11 @@ public class CompositeRoll extends AbstractRoll {
         double worsePct = 1;
         boolean allZero = true;
         for (AbstractRoll roll : rolls){
-            double intermediate = (roll.getWorsePct() / 100.0);
-            if (intermediate == 0){
-                intermediate = (roll.getPct() / 100.0);
-            } else allZero = false; //there exists a non-zero value in the composite
-            worsePct *= intermediate;
+
+            boolean isZero = roll.getWorsePct() / 100.0 == 0;
+            if (!isZero) allZero = false; //there exists a non-zero value in the composite
+            worsePct *= isZero ? roll.getPct() / 100.0 : roll.getWorsePct() / 100.0;
+
         }
 
         if (allZero) return 0; //there exists no worse roll. Also holds for empty set.
@@ -97,11 +97,11 @@ public class CompositeRoll extends AbstractRoll {
         double betterPct = 1;
         boolean allZero = true;
         for (AbstractRoll roll : rolls) {
-            double intermediate = (roll.getBetterPct() / 100);
-            if (intermediate == 0){
-                intermediate = (roll.getPct() / 100.0);
-            } else allZero = false; //there exists a non-zero value in the composite
-            betterPct *= intermediate;
+
+            boolean isZero = roll.getBetterPct() / 100.0 == 0;
+            if (!isZero) allZero = false; //there exists a non-zero value in the composite
+            betterPct *= isZero ? roll.getPct() / 100.0 : roll.getBetterPct() / 100.0;
+
         }
 
         if (allZero) return 0; //there exists no better roll. Also holds for empty set.

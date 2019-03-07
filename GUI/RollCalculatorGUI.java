@@ -23,10 +23,12 @@ public class RollCalculatorGUI {
     private static final String PREF_PRESENTER = "UseNumberPresenter";
     private static final String PREF_CLEARROLLS = "ClearRollsAfterShow";
     private static final String PREF_SYSTEMLAF = "LookAndFeelPreference";
+    private static final String PREF_DYNAMICTIMESCALE = "UseLargerScaleForRidiculousValues";
 
     //load settings
     private static boolean settingsUseNumberPresenter = prefs.getBoolean(PREF_PRESENTER, true);
     private static boolean settingsClearRollsAfterShow = prefs.getBoolean(PREF_CLEARROLLS, true);
+    private static boolean settingsUseDynamicTimeScale = prefs.getBoolean(PREF_DYNAMICTIMESCALE, true);
     private static boolean settingsSystemLAF = prefs.getBoolean(PREF_SYSTEMLAF, false);
 
     private static final String bottomRollsLabelStartText = "Your rolls: ";
@@ -167,6 +169,28 @@ public class RollCalculatorGUI {
         String equalOrBetterPct;
         String equalOrWorsePct;
         String separator;
+        String worseMinutes;
+        String betterMinutes;
+        String worseDays;
+        String betterDays;
+        String worseYears;
+        String betterYears;
+        String worseSunLife;
+        String betterSunLife;
+        String worseUniverseLife;
+        String betterUniverseLife;
+
+        //for enormous time scales on ridiculous rolls the user certainly made up!
+        int billion = 1000000000;
+        double sunLifeTimeMinutes = billion;
+        sunLifeTimeMinutes*= 10 * 365 * 24 * 60; //5,256,000,000,000,000 (10 billion years)
+        System.out.println("sun: " + sunLifeTimeMinutes);
+
+        double universeLifeTimeMinutes = billion; //oh boy. (currently 10^9)
+        for (int i = 0; i < 10; i++){
+            universeLifeTimeMinutes *= billion; //multiplying by billion 10x. Now at 10^99.
+        }
+        universeLifeTimeMinutes *= 10 * 365 * 24 * 60; //10^100 in minutes. double must be getting a little inaccurate up here.
 
         //initialize display variables
         if (settingsUseNumberPresenter) {
@@ -176,6 +200,16 @@ public class RollCalculatorGUI {
             worseOneInX = presenter.improveDoubleLooks(yourRoll.getWorseOneInX());
             equalOrBetterPct = presenter.improveDoubleLooks((1.0 / yourRoll.getBetterOneInX()) * 100);
             equalOrWorsePct = presenter.improveDoubleLooks((1.0 / yourRoll.getWorseOneInX()) * 100);
+            worseMinutes = presenter.improveDoubleLooks(yourRoll.getWorseOneInX() * 15);
+            betterMinutes = presenter.improveDoubleLooks(yourRoll.getBetterOneInX() * 15);
+            worseDays = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / (3600 * 24));
+            betterDays = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / (3600 * 24));
+            worseYears = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / 525600.0);
+            betterYears = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / 525600.0);
+            worseSunLife = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / sunLifeTimeMinutes);
+            betterSunLife = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / sunLifeTimeMinutes);
+            worseUniverseLife = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / universeLifeTimeMinutes);
+            betterUniverseLife = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / universeLifeTimeMinutes);
         } else {
             betterPct = Double.toString(yourRoll.getBetterPct());
             betterOneInX = Double.toString(yourRoll.getBetterOneInX());
@@ -183,6 +217,16 @@ public class RollCalculatorGUI {
             worseOneInX = Double.toString(yourRoll.getWorseOneInX());
             equalOrBetterPct = Double.toString((1.0 / yourRoll.getBetterOneInX()) * 100);
             equalOrWorsePct = Double.toString((1.0 / yourRoll.getWorseOneInX()) * 100);
+            worseMinutes = Double.toString(yourRoll.getWorseOneInX() * 15);
+            betterMinutes = Double.toString(yourRoll.getBetterOneInX() * 15);
+            worseDays = Double.toString((yourRoll.getWorseOneInX() * 15) / (3600 * 24));
+            betterDays = Double.toString((yourRoll.getBetterOneInX() * 15) / (3600 * 24));
+            worseYears = Double.toString((yourRoll.getWorseOneInX() * 15) / 525600.0);
+            betterYears = Double.toString((yourRoll.getBetterOneInX() * 15) / 525600.0);
+            worseSunLife = Double.toString((yourRoll.getWorseOneInX() * 15) / sunLifeTimeMinutes);
+            betterSunLife = Double.toString((yourRoll.getBetterOneInX() * 15) / sunLifeTimeMinutes);
+            worseUniverseLife = Double.toString((yourRoll.getWorseOneInX() * 15) / universeLifeTimeMinutes);
+            betterUniverseLife = Double.toString((yourRoll.getBetterOneInX() * 15) / universeLifeTimeMinutes);
         }
 
         System.out.println(badRoll ? "This is a bad roll" : "This is a good roll");
@@ -236,15 +280,35 @@ public class RollCalculatorGUI {
         msg.append(badRoll ? equalOrWorsePct : equalOrBetterPct);
         msg.append("%)");
 
+        //time statistics
+        boolean veryLongTime; //whether to display minutes, days, years vs. years, sunLifeTime, UniverseLifeTime
+        System.out.println("yrs:" + worseYears);
+        if (badRoll) { //about to display stats on worse-TimeValues
+            //(taking in account the inserted ',', if length in years is at least 1 billion, as well as ensuring it is not a very small value (decimal dot).
+            veryLongTime = worseYears.length() > 11 && ! worseYears.contains(".");
+        } else {
+            veryLongTime = betterYears.length() > 11 && ! betterYears.contains(".");
+        }
+
         msg.append("\n\nAssuming 15 minutes per roll, it will take you approximately \n");
         msg.append(badRoll ? worseOneInX : betterOneInX);
         msg.append(" rolls = ");
-        msg.append(badRoll ? presenter.improveDoubleLooks(yourRoll.getWorseOneInX() * 15): presenter.improveDoubleLooks(yourRoll.getBetterOneInX() * 15));
-        msg.append(" minutes \n(");
-        msg.append(badRoll ? presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / (3600 * 24)) : presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / (3600 * 24)));
-        msg.append(" days, or ");
-        msg.append(badRoll ? presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / 525600.0) : presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / 525600.0));
-        msg.append(" years)");
+        if (veryLongTime && settingsUseDynamicTimeScale) {
+            msg.append(badRoll ? worseYears : betterYears);
+            msg.append(" years, which is \n");
+            msg.append(badRoll ? worseSunLife : betterSunLife);
+            msg.append(" lifetimes of the Sun, which is \n");
+            msg.append(badRoll ? worseUniverseLife : betterUniverseLife);
+            msg.append(" times the heat death of the Universe worth of time.");
+            msg.append("\n\nHey, you didn't happen to make that roll up, did you?");
+        } else {
+            msg.append(badRoll ? worseMinutes : betterMinutes);
+            msg.append(" minutes \n(");
+            msg.append(badRoll ? worseDays : betterDays);
+            msg.append(" days, or ");
+            msg.append(badRoll ? worseYears : betterYears);
+            msg.append(" years)");
+        }
         msg.append("\nOf playing the game to get a roll at least as ");
         msg.append(badRoll ? "bad." : "good.");
 
@@ -372,6 +436,7 @@ public class RollCalculatorGUI {
             final JCheckBoxMenuItem finalForLambda1;
             final JCheckBoxMenuItem finalForLambda2;
             final JCheckBoxMenuItem finalForLambda3;
+            final JCheckBoxMenuItem finalForLambda4;
 
             menuBar = new JMenuBar();
             menu = new JMenu("Settings");
@@ -379,6 +444,7 @@ public class RollCalculatorGUI {
 
             checkBox = new JCheckBoxMenuItem("Empty Roll List after computing odds");
             checkBox.setState(settingsClearRollsAfterShow);
+            checkBox.setToolTipText("Whether or not to empty the list of entered rolls when you click 'show me the odds'.");
             finalForLambda1 = checkBox;
             checkBox.addItemListener((e) -> {
                 settingsClearRollsAfterShow = finalForLambda1.getState();
@@ -388,6 +454,7 @@ public class RollCalculatorGUI {
 
             checkBox = new JCheckBoxMenuItem("Post-process roll statistics for present-ability");
             checkBox.setState(settingsUseNumberPresenter);
+            checkBox.setToolTipText("Whether or not to edit your statistics to look (arguably) more readable / impressive.");
             finalForLambda2 = checkBox;
             checkBox.addItemListener((e) -> {
                 settingsUseNumberPresenter = finalForLambda2.getState();
@@ -395,12 +462,24 @@ public class RollCalculatorGUI {
             });
             menu.add(checkBox);
 
-            checkBox = new JCheckBoxMenuItem("Use System look-and-feel");
-
-            checkBox.setState(settingsSystemLAF);
+            checkBox = new JCheckBoxMenuItem("Use larger time scale for statistics on huge values");
+            checkBox.setState(settingsUseDynamicTimeScale);
+            checkBox.setToolTipText("Whether or not to convert the minutes/days/years scale into years/sunLifeTime/universeLifeTime if you have a very large value in your roll");
             finalForLambda3 = checkBox;
             checkBox.addItemListener((e) -> {
-                settingsSystemLAF = finalForLambda3.getState();
+                settingsUseDynamicTimeScale = finalForLambda3.getState();
+                prefs.putBoolean(PREF_DYNAMICTIMESCALE, settingsUseDynamicTimeScale);
+            });
+            menu.add(checkBox);
+
+            menu.addSeparator();
+
+            checkBox = new JCheckBoxMenuItem("Use System look-and-feel");
+            checkBox.setState(settingsSystemLAF);
+            checkBox.setToolTipText("Whether or not to use the System UI look (as opposed to the Java one).");
+            finalForLambda4 = checkBox;
+            checkBox.addItemListener((e) -> {
+                settingsSystemLAF = finalForLambda4.getState();
                 prefs.putBoolean(PREF_SYSTEMLAF, settingsSystemLAF);
                 loadPrefferedLAF();
             });
@@ -426,7 +505,8 @@ public class RollCalculatorGUI {
                     "You can then enter another roll (as many as you like!) until you choose to be shown the odds.\n\n" +
                     "At any time, you can keep track of which rolls you entered by looking at the small text at the bottom.\n" +
                     "If you made a mistake when entering one of your rolls, use the removal buttons on the UI.\n" +
-                    "Finally, bee sure to check out the available customization under 'Settings'!\n\n" +
+                    "Finally, if you wonder what something does, try holding your mouse over it to get a tooltip,\n" +
+                    "and bee sure to check out the available customization under 'Settings'!\n\n" +
                     "Happy rolling ;)";
             menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, msg,"Tool Info", JOptionPane.INFORMATION_MESSAGE));
             menu.add(menuItem);
