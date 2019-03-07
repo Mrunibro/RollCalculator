@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/sorcerer
  */
-public class ROTMGSorcerer extends ROTMGClass {
-    public ROTMGSorcerer(){
+class ROTMGSorcerer extends ROTMGClass {
+    ROTMGSorcerer(){
         super();
         mana = new ROTMGStatRange(5, 15);
         attack = new ROTMGStatRange(1, 2);

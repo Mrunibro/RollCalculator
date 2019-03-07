@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/assassin
  */
-public class ROTMGAssassin extends ROTMGClass {
-    public ROTMGAssassin(){
+class ROTMGAssassin extends ROTMGClass {
+    ROTMGAssassin(){
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(0, 2);

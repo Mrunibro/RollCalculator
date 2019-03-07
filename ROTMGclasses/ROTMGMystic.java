@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/mystic
  */
-public class ROTMGMystic extends ROTMGClass {
-    public ROTMGMystic(){
+class ROTMGMystic extends ROTMGClass {
+    ROTMGMystic(){
         super();
         mana = new ROTMGStatRange(5, 15);
         attack = new ROTMGStatRange(1, 2);

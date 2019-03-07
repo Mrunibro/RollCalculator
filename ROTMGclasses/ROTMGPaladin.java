@@ -3,8 +3,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/paladin
  */
-public class ROTMGPaladin extends ROTMGClass {
-    public ROTMGPaladin(){
+class ROTMGPaladin extends ROTMGClass {
+    ROTMGPaladin(){
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(1, 2);

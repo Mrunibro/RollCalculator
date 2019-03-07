@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Stat data taken from realmeye.com/wiki/rogue
  */
-public class ROTMGRogue extends ROTMGClass {
-    public ROTMGRogue(){
+class ROTMGRogue extends ROTMGClass {
+    ROTMGRogue(){
         super(); //health
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(0, 2);

@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/trickster
  */
-public class ROTMGTrickster extends ROTMGClass {
-    public ROTMGTrickster(){
+class ROTMGTrickster extends ROTMGClass {
+    ROTMGTrickster(){
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(1, 2);

@@ -184,7 +184,6 @@ public class RollCalculatorGUI {
         int billion = 1000000000;
         double sunLifeTimeMinutes = billion;
         sunLifeTimeMinutes*= 10 * 365 * 24 * 60; //5,256,000,000,000,000 (10 billion years)
-        System.out.println("sun: " + sunLifeTimeMinutes);
 
         double universeLifeTimeMinutes = billion; //oh boy. (currently 10^9)
         for (int i = 0; i < 10; i++){
@@ -282,12 +281,11 @@ public class RollCalculatorGUI {
 
         //time statistics
         boolean veryLongTime; //whether to display minutes, days, years vs. years, sunLifeTime, UniverseLifeTime
-        System.out.println("yrs:" + worseYears);
         if (badRoll) { //about to display stats on worse-TimeValues
             //(taking in account the inserted ',', if length in years is at least 1 billion, as well as ensuring it is not a very small value (decimal dot).
-            veryLongTime = worseYears.length() > 11 && ! worseYears.contains(".");
+            veryLongTime = settingsUseNumberPresenter ? worseYears.length() > 11 && ! worseYears.contains(".") : worseYears.length() > 9 && !worseYears.contains(".");
         } else {
-            veryLongTime = betterYears.length() > 11 && ! betterYears.contains(".");
+            veryLongTime = settingsUseNumberPresenter ? betterYears.length() > 11 && ! betterYears.contains(".") : betterYears.length() > 9 && !betterYears.contains(".");
         }
 
         msg.append("\n\nAssuming 15 minutes per roll, it will take you approximately \n");

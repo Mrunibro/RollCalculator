@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/necromancer
  */
-public class ROTMGNecromancer extends ROTMGClass {
-    public ROTMGNecromancer(){
+class ROTMGNecromancer extends ROTMGClass {
+    ROTMGNecromancer(){
         super();
         mana = new ROTMGStatRange(5, 15);
         attack = new ROTMGStatRange(1, 2);

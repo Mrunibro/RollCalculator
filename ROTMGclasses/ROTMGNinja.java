@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/ninja
  */
-public class ROTMGNinja extends ROTMGClass {
-    public ROTMGNinja(){
+class ROTMGNinja extends ROTMGClass {
+    ROTMGNinja(){
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(1, 2);

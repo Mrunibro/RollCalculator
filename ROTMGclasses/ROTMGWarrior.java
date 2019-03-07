@@ -3,8 +3,8 @@ package ROTMGclasses;
 /**
  * Stat data taken from realmeye.com/wiki/warrior
  */
-public class ROTMGWarrior extends ROTMGClass {
-    public ROTMGWarrior() {
+class ROTMGWarrior extends ROTMGClass {
+    ROTMGWarrior() {
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(1, 2);

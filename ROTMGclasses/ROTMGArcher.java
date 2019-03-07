@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Stat data taken from realmeye.com/wiki/archer
  */
-public class ROTMGArcher extends ROTMGClass {
-    public ROTMGArcher() {
+class ROTMGArcher extends ROTMGClass {
+    ROTMGArcher() {
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(1, 2);

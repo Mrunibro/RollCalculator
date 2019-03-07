@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Data taken from https://www.realmeye.com/wiki/huntress
  */
-public class ROTMGHuntress extends ROTMGClass {
-    public ROTMGHuntress(){
+class ROTMGHuntress extends ROTMGClass {
+    ROTMGHuntress(){
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(1, 2);

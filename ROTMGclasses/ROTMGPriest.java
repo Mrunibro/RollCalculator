@@ -3,8 +3,8 @@ package ROTMGclasses;
 /**
  * Stat data taken from realmeye.com/wiki/priest
  */
-public class ROTMGPriest extends ROTMGClass{
-    public ROTMGPriest() {
+class ROTMGPriest extends ROTMGClass{
+    ROTMGPriest() {
         super();
         mana = new ROTMGStatRange(5, 15);
         attack = new ROTMGStatRange(0, 2);

@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Stat data taken from realmeye.com/wiki/knight
  */
-public class ROTMGKnight extends ROTMGClass {
-    public ROTMGKnight(){
+class ROTMGKnight extends ROTMGClass {
+    ROTMGKnight(){
         super();
         mana = new ROTMGStatRange(2, 8);
         defense = new ROTMGStatRange(0, 0);

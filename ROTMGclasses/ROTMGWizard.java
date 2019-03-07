@@ -2,8 +2,8 @@ package ROTMGclasses;
 /**
  * Stat data taken from realmeye.com/wiki/wizard
  */
-public class ROTMGWizard extends ROTMGClass{
-    public ROTMGWizard(){
+class ROTMGWizard extends ROTMGClass{
+    ROTMGWizard(){
         super();
         mana = new ROTMGStatRange(5, 15);
         attack = new ROTMGStatRange(1, 2);

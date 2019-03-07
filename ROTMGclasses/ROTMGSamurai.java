@@ -1,7 +1,7 @@
 package ROTMGclasses;
 
-public class ROTMGSamurai extends ROTMGClass {
-    public ROTMGSamurai() {
+class ROTMGSamurai extends ROTMGClass {
+    ROTMGSamurai() {
         super();
         mana = new ROTMGStatRange(2, 8);
         attack = new ROTMGStatRange(1, 2);
