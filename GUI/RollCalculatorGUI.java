@@ -20,10 +20,11 @@ public class RollCalculatorGUI {
 
     private boolean settingsUseNumberPresenter = true;
     private boolean settingsClearRollsAfterShow = true;
+    private boolean settingsSystemLAF = false;
 
     private final String bottomRollsLabelStartText = "Your rolls: ";
     private final static String VERSION = "1.0.0"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
-    private static JFrame frame = new JFrame("RotMG Roll Calculator " + VERSION);
+    private static JFrame frame;
 
     private final RollCalcGUIManager gui;
 
@@ -40,6 +41,9 @@ public class RollCalculatorGUI {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+
+            frame = new JFrame("RotMG Roll Calculator " + VERSION);
+
             frame.setContentPane(new RollCalculatorGUI().mainPanel);
             frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
             frame.setResizable(false); //no resizing allowed. They'd see how hacked this UI is!
@@ -435,6 +439,7 @@ public class RollCalculatorGUI {
             JCheckBoxMenuItem checkBox;
             final JCheckBoxMenuItem finalForLambda1;
             final JCheckBoxMenuItem finalForLambda2;
+            final JCheckBoxMenuItem finalForLambda3;
 
             menuBar = new JMenuBar();
             menu = new JMenu("Settings");
@@ -442,19 +447,42 @@ public class RollCalculatorGUI {
 
             checkBox = new JCheckBoxMenuItem("Empty Roll List after computing odds");
             checkBox.setState(true);
-
             finalForLambda1 = checkBox;
             checkBox.addItemListener((e) -> settingsClearRollsAfterShow = finalForLambda1.getState());
-
-            checkBox.setName("ClearRollsAfterShow");
             menu.add(checkBox);
+
             checkBox = new JCheckBoxMenuItem("Post-process roll statistics for present-ability");
             checkBox.setState(true);
-            checkBox.setName("UseNumberPresenter");
-
             finalForLambda2 = checkBox;
             checkBox.addItemListener((e) -> settingsUseNumberPresenter = finalForLambda2.getState());
+            menu.add(checkBox);
 
+            checkBox = new JCheckBoxMenuItem("Use System look-and-feel");
+
+            checkBox.setState(false);
+            finalForLambda3 = checkBox;
+            checkBox.addItemListener((e) -> {
+                settingsSystemLAF = finalForLambda3.getState();
+                if (settingsSystemLAF){
+                    try {
+                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                        SwingUtilities.updateComponentTreeUI(frame);
+                        frame.pack();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    try {
+                        UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+                        SwingUtilities.updateComponentTreeUI(frame);
+                        frame.pack();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            });
             menu.add(checkBox);
 
             menu = new JMenu("About");
