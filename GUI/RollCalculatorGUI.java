@@ -8,22 +8,29 @@ import ROTMGRoll.RollCalculator;
 import javax.swing.*;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.prefs.Preferences;
 
 public class RollCalculatorGUI {
 
     private final NumberPresenter presenter;
 
-    private CompositeRoll compositeRoll;
+    private final CompositeRoll compositeRoll;
 
-    private ArrayList<String> includedRolls;
-    private ArrayList<String> chosenCharacters;
+    private final ArrayList<String> includedRolls;
+    private final ArrayList<String> chosenCharacters;
 
-    private boolean settingsUseNumberPresenter = true;
-    private boolean settingsClearRollsAfterShow = true;
-    private boolean settingsSystemLAF = false;
+    private static final Preferences prefs = Preferences.userRoot().node(RollCalculatorGUI.class.getName());
+    private static final String PREF_PRESENTER = "UseNumberPresenter";
+    private static final String PREF_CLEARROLLS = "ClearRollsAfterShow";
+    private static final String PREF_SYSTEMLAF = "LookAndFeelPreference";
 
-    private final String bottomRollsLabelStartText = "Your rolls: ";
-    private final static String VERSION = "1.0.0"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
+    //load settings
+    private static boolean settingsUseNumberPresenter = prefs.getBoolean(PREF_PRESENTER, true);
+    private static boolean settingsClearRollsAfterShow = prefs.getBoolean(PREF_CLEARROLLS, true);
+    private static boolean settingsSystemLAF = prefs.getBoolean(PREF_SYSTEMLAF, false);
+
+    private static final String bottomRollsLabelStartText = "Your rolls: ";
+    private static final String VERSION = "1.0.0"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
     private static JFrame frame;
 
     private final RollCalcGUIManager gui;
@@ -41,6 +48,21 @@ public class RollCalculatorGUI {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
+            if (settingsSystemLAF){ //functionally equivalent to loadPrefferedLAF(). Need to execute it in main too and it cannot bee referenced from a static context.
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                try {
+                    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
+                }
+            }
 
             frame = new JFrame("RotMG Roll Calculator " + VERSION);
 
@@ -300,6 +322,7 @@ public class RollCalculatorGUI {
          * Initialize gui components
          */
         void initialize() {
+            //loadPrefferedLAF(); visually bugs clear buttons in windows System LAF. Solved by executing this method in main
             //(manually) create menubar - IntelliJ form designer doesn't support menubars?
             createMenuBar();
             //place values in comboboxes
@@ -309,6 +332,126 @@ public class RollCalculatorGUI {
             updateRemoveButtons();
             //statAmount is based on all 3 of the above and will be updated when the above change. Hence its init == update.
             updateStatAmountCombobox();
+        }
+
+        /**
+         * Changes look and feel by loading preference
+         */
+        void loadPrefferedLAF(){
+            settingsSystemLAF = prefs.getBoolean(PREF_SYSTEMLAF, false); //load the value
+            if (settingsSystemLAF){
+                try {
+                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+                    SwingUtilities.updateComponentTreeUI(frame);
+                    frame.pack();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
+                }
+            } else {
+                try {
+                    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+                    SwingUtilities.updateComponentTreeUI(frame);
+                    frame.pack();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+
+        /**
+         * Initialize the menu bar.
+         * Has to bee manually created unlike other components due to the way IntelliJ does forms
+         */
+        private void createMenuBar(){
+            JMenuBar menuBar;
+            JMenu menu;
+            JMenuItem menuItem;
+            JCheckBoxMenuItem checkBox;
+            final JCheckBoxMenuItem finalForLambda1;
+            final JCheckBoxMenuItem finalForLambda2;
+            final JCheckBoxMenuItem finalForLambda3;
+
+            menuBar = new JMenuBar();
+            menu = new JMenu("Settings");
+            menuBar.add(menu);
+
+            checkBox = new JCheckBoxMenuItem("Empty Roll List after computing odds");
+            checkBox.setState(settingsClearRollsAfterShow);
+            finalForLambda1 = checkBox;
+            checkBox.addItemListener((e) -> {
+                settingsClearRollsAfterShow = finalForLambda1.getState();
+                prefs.putBoolean(PREF_CLEARROLLS, settingsClearRollsAfterShow);
+            });
+            menu.add(checkBox);
+
+            checkBox = new JCheckBoxMenuItem("Post-process roll statistics for present-ability");
+            checkBox.setState(settingsUseNumberPresenter);
+            finalForLambda2 = checkBox;
+            checkBox.addItemListener((e) -> {
+                settingsUseNumberPresenter = finalForLambda2.getState();
+                prefs.putBoolean(PREF_PRESENTER, settingsUseNumberPresenter);
+            });
+            menu.add(checkBox);
+
+            checkBox = new JCheckBoxMenuItem("Use System look-and-feel");
+
+            checkBox.setState(settingsSystemLAF);
+            finalForLambda3 = checkBox;
+            checkBox.addItemListener((e) -> {
+                settingsSystemLAF = finalForLambda3.getState();
+                prefs.putBoolean(PREF_SYSTEMLAF, settingsSystemLAF);
+                loadPrefferedLAF();
+            });
+            menu.add(checkBox);
+
+            menu = new JMenu("About");
+            menuItem = new JMenuItem("GitHub page");
+            menuItem.addActionListener((e) -> {
+                if (JOptionPane.showConfirmDialog(null, "You are about to open a link to GitHub, continue?", "Continue to GitHub?", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    openWebPage("https://github.com/Mrunibro/RollCalculator");
+                }
+            });
+            menu.add(menuItem);
+            menu.addSeparator();
+            menuItem = new JMenuItem("Tool information & How to use");
+            String msg = "RotMG Roll Calculator. Version: " + VERSION + " ©Mrunibro\n\n" +
+                    "This tool Calculates any and all rolls your RotMG Characters can get.\n\n" +
+                    "To use, enter your characters' level, class, stat and how many points in the stat you have.\n" +
+                    "When you click \"Show me the odds!\", you will see a message containing \n" +
+                    "any relevant roll data the program could think of.\n\n" +
+                    "If you want to calculate multiple rolls at once (For example, a +10HP but -25MP roll), \n" +
+                    "use the smaller \"Enter this roll, and add another roll\" button instead. \n" +
+                    "You can then enter another roll (as many as you like!) until you choose to be shown the odds.\n\n" +
+                    "At any time, you can keep track of which rolls you entered by looking at the small text at the bottom.\n" +
+                    "If you made a mistake when entering one of your rolls, use the removal buttons on the UI.\n" +
+                    "Finally, bee sure to check out the available customization under 'Settings'!\n\n" +
+                    "Happy rolling ;)";
+            menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, msg,"Tool Info", JOptionPane.INFORMATION_MESSAGE));
+            menu.add(menuItem);
+            menuItem = new JMenuItem("Report a bug");
+            String bugMsg = "Have you encountered a problem with the tool? Or would you like to give feedback?\n\nFeel free to contact me on one of the following platforms:\n\n" +
+                    "GitHub: use the 'GitHub' option in this menu to navigate directly to this tool's page." +
+                    "\nReddit: /u/Mrunibro" +
+                    "\nDiscord: @Mrunibro#4022";
+            menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, bugMsg, "Contacting the developer", JOptionPane.INFORMATION_MESSAGE));
+            menu.add(menuItem);
+            menu.addSeparator();
+            menuItem = new JMenuItem("Donate");
+            String donMsg = "Are you exceptionally satisfied with this tool?\n\n" +
+                    "What matters the most to me is that everyone enjoys this tool, And I expect nothing of you in return.\n\n" +
+                    "If you wish to show extra support nonetheless, it is very highly appreciated!";
+            menuItem.addActionListener((e) -> {
+                if (JOptionPane.showConfirmDialog(null, donMsg, "Donate information", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                    openWebPage("https://www.paypal.me/ROTMGRollCalculator");
+                }
+            });
+            menu.add(menuItem);
+
+            menuBar.add(menu);
+
+            frame.setJMenuBar(menuBar);
         }
 
         /**
@@ -429,111 +572,6 @@ public class RollCalculatorGUI {
         }
 
         /**
-         * Initialize the menu bar.
-         * Has to bee manually created unlike other components due to the way IntelliJ does forms
-         */
-        private void createMenuBar(){
-            JMenuBar menuBar;
-            JMenu menu;
-            JMenuItem menuItem;
-            JCheckBoxMenuItem checkBox;
-            final JCheckBoxMenuItem finalForLambda1;
-            final JCheckBoxMenuItem finalForLambda2;
-            final JCheckBoxMenuItem finalForLambda3;
-
-            menuBar = new JMenuBar();
-            menu = new JMenu("Settings");
-            menuBar.add(menu);
-
-            checkBox = new JCheckBoxMenuItem("Empty Roll List after computing odds");
-            checkBox.setState(true);
-            finalForLambda1 = checkBox;
-            checkBox.addItemListener((e) -> settingsClearRollsAfterShow = finalForLambda1.getState());
-            menu.add(checkBox);
-
-            checkBox = new JCheckBoxMenuItem("Post-process roll statistics for present-ability");
-            checkBox.setState(true);
-            finalForLambda2 = checkBox;
-            checkBox.addItemListener((e) -> settingsUseNumberPresenter = finalForLambda2.getState());
-            menu.add(checkBox);
-
-            checkBox = new JCheckBoxMenuItem("Use System look-and-feel");
-
-            checkBox.setState(false);
-            finalForLambda3 = checkBox;
-            checkBox.addItemListener((e) -> {
-                settingsSystemLAF = finalForLambda3.getState();
-                if (settingsSystemLAF){
-                    try {
-                        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                        SwingUtilities.updateComponentTreeUI(frame);
-                        frame.pack();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
-                    }
-                } else {
-                    try {
-                        UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
-                        SwingUtilities.updateComponentTreeUI(frame);
-                        frame.pack();
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        JOptionPane.showMessageDialog(null, "Encountered an error when changing look", ex.getClass().getCanonicalName(), JOptionPane.ERROR_MESSAGE);
-                    }
-                }
-            });
-            menu.add(checkBox);
-
-            menu = new JMenu("About");
-            menuItem = new JMenuItem("GitHub page");
-            menuItem.addActionListener((e) -> {
-                if (JOptionPane.showConfirmDialog(null, "You are about to open a link to GitHub, continue?", "Continue to GitHub?", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                    openWebPage("https://github.com/Mrunibro/RollCalculator");
-                }
-            });
-            menu.add(menuItem);
-            menu.addSeparator();
-            menuItem = new JMenuItem("Tool information & How to use");
-            String msg = "RotMG Roll Calculator. Version: " + VERSION + " ©Mrunibro\n\n" +
-                    "This tool Calculates any and all rolls your RotMG Characters can get.\n\n" +
-                    "To use, enter your characters' level, class, stat and how many points in the stat you have.\n" +
-                    "When you click \"Show me the odds!\", you will see a message containing \n" +
-                    "any relevant roll data the program could think of.\n\n" +
-                    "If you want to calculate multiple rolls at once (For example, a +10HP but -25MP roll), \n" +
-                    "use the smaller \"Enter this roll, and add another roll\" button instead. \n" +
-                    "You can then enter another roll (as many as you like!) until you choose to be shown the odds.\n\n" +
-                    "At any time, you can keep track of which rolls you entered by looking at the small text at the bottom.\n" +
-                    "If you made a mistake when entering one of your rolls, use the removal buttons on the UI.\n" +
-                    "Finally, bee sure to check out the available customization under 'Settings'!\n\n" +
-                    "Happy rolling ;)";
-            menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, msg,"Tool Info", JOptionPane.INFORMATION_MESSAGE));
-            menu.add(menuItem);
-            menuItem = new JMenuItem("Report a bug");
-            String bugMsg = "Have you encountered a problem with the tool? Or would you like to give feedback?\n\nFeel free to contact me on one of the following platforms:\n\n" +
-                    "GitHub: use the 'GitHub' option in this menu to navigate directly to this tool's page." +
-                    "\nReddit: /u/Mrunibro" +
-                    "\nDiscord: @Mrunibro#4022";
-            menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, bugMsg, "Contacting the developer", JOptionPane.INFORMATION_MESSAGE));
-            menu.add(menuItem);
-            menu.addSeparator();
-            menuItem = new JMenuItem("Donate");
-            String donMsg = "Are you exceptionally satisfied with this tool?\n\n" +
-                    "What matters the most to me is that everyone enjoys this tool, And I expect nothing of you in return.\n\n" +
-                    "If you wish to show extra support nonetheless, it is very highly appreciated!";
-            menuItem.addActionListener((e) -> {
-                if (JOptionPane.showConfirmDialog(null, donMsg, "Donate information", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                    openWebPage("https://www.paypal.me/ROTMGRollCalculator");
-                }
-            });
-            menu.add(menuItem);
-
-            menuBar.add(menu);
-
-            frame.setJMenuBar(menuBar);
-        }
-
-        /**
          * Opens the web browser with the specified URL
          * @param url the URL to try and open.
          */
@@ -545,5 +583,6 @@ public class RollCalculatorGUI {
                 e1.printStackTrace();
             }
         }
+
     }
 }

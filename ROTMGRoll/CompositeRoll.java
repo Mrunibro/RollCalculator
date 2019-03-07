@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * By way of multiplying probabilities of all held Rolls together
  *
  * Values such as 'betterPct' and 'worsePct' only consider <i>objectively</i> worse rolls.
- * That is, rolls for which every single field is worse than what it is compared against.
+ * That is, rolls for which every single field is worse/better than what it is compared against.
  */
 public class CompositeRoll extends AbstractRoll {
 
