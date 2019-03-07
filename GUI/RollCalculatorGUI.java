@@ -32,7 +32,7 @@ public class RollCalculatorGUI {
     private static boolean settingsSystemLAF = prefs.getBoolean(PREF_SYSTEMLAF, false);
 
     private static final String bottomRollsLabelStartText = "Your rolls: ";
-    private static final String VERSION = "1.1.0"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
+    private static final String VERSION = "1.1.1"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
     private static JFrame frame;
 
     private final RollCalcGUIManager gui;
@@ -166,6 +166,8 @@ public class RollCalculatorGUI {
         String betterOneInX;
         String worsePct;
         String worseOneInX;
+        String rollsToGetWorse;
+        String rollsToGetBetter;
         String equalOrBetterPct;
         String equalOrWorsePct;
         String separator;
@@ -199,16 +201,23 @@ public class RollCalculatorGUI {
             worseOneInX = presenter.improveDoubleLooks(yourRoll.getWorseOneInX());
             equalOrBetterPct = presenter.improveDoubleLooks((1.0 / yourRoll.getBetterOneInX()) * 100);
             equalOrWorsePct = presenter.improveDoubleLooks((1.0 / yourRoll.getWorseOneInX()) * 100);
-            worseMinutes = presenter.improveDoubleLooks(yourRoll.getWorseOneInX() * 15);
-            betterMinutes = presenter.improveDoubleLooks(yourRoll.getBetterOneInX() * 15);
-            worseDays = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / (3600 * 24));
-            betterDays = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / (3600 * 24));
+            //worseMinutes = presenter.improveDoubleLooks(yourRoll.getWorseOneInX() * 15);
+            //betterMinutes = presenter.improveDoubleLooks(yourRoll.getBetterOneInX() * 15);
+            worseDays = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / (60 * 24));
+            betterDays = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / (60 * 24));
             worseYears = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / 525600.0);
             betterYears = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / 525600.0);
             worseSunLife = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / sunLifeTimeMinutes);
             betterSunLife = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / sunLifeTimeMinutes);
             worseUniverseLife = presenter.improveDoubleLooks((yourRoll.getWorseOneInX() * 15) / universeLifeTimeMinutes);
             betterUniverseLife = presenter.improveDoubleLooks((yourRoll.getBetterOneInX() * 15) / universeLifeTimeMinutes);
+            //refine some values with specific decimal places
+            //fully round minutes
+            worseMinutes = presenter.decimalScrubber(yourRoll.getWorseOneInX() * 15, 0);
+            betterMinutes = presenter.decimalScrubber(yourRoll.getBetterOneInX() * 15, 0);
+            //make rolls show 1 decimal place if single-digit roll
+            rollsToGetWorse = worseOneInX.contains(".") ? presenter.decimalScrubber(yourRoll.getWorseOneInX(), 2) : worseOneInX;
+            rollsToGetBetter = betterOneInX.contains(".") ? presenter.decimalScrubber(yourRoll.getBetterOneInX(), 2) : betterOneInX;
         } else {
             betterPct = Double.toString(yourRoll.getBetterPct());
             betterOneInX = Double.toString(yourRoll.getBetterOneInX());
@@ -226,6 +235,9 @@ public class RollCalculatorGUI {
             betterSunLife = Double.toString((yourRoll.getBetterOneInX() * 15) / sunLifeTimeMinutes);
             worseUniverseLife = Double.toString((yourRoll.getWorseOneInX() * 15) / universeLifeTimeMinutes);
             betterUniverseLife = Double.toString((yourRoll.getBetterOneInX() * 15) / universeLifeTimeMinutes);
+            //when not touching up numbers, leave these as-is
+            rollsToGetWorse = worseOneInX;
+            rollsToGetBetter = betterOneInX;
         }
 
         System.out.println(badRoll ? "This is a bad roll" : "This is a good roll");
@@ -283,13 +295,13 @@ public class RollCalculatorGUI {
         boolean veryLongTime; //whether to display minutes, days, years vs. years, sunLifeTime, UniverseLifeTime
         if (badRoll) { //about to display stats on worse-TimeValues
             //(taking in account the inserted ',', if length in years is at least 1 billion, as well as ensuring it is not a very small value (decimal dot).
-            veryLongTime = settingsUseNumberPresenter ? worseYears.length() > 11 && ! worseYears.contains(".") : worseYears.length() > 9 && !worseYears.contains(".");
+            veryLongTime = settingsUseNumberPresenter ? ((worseOneInX.length() > 13) && !worseOneInX.contains(".")) : (Double.parseDouble(worseOneInX) > (10 * billion));
         } else {
-            veryLongTime = settingsUseNumberPresenter ? betterYears.length() > 11 && ! betterYears.contains(".") : betterYears.length() > 9 && !betterYears.contains(".");
+            veryLongTime = settingsUseNumberPresenter ? betterOneInX.length() > 13 && ! betterOneInX.contains(".") : (Double.parseDouble(betterOneInX) > (10 * billion));
         }
 
         msg.append("\n\nAssuming 15 minutes per roll, it will take you approximately \n");
-        msg.append(badRoll ? worseOneInX : betterOneInX);
+        msg.append(badRoll ? rollsToGetWorse : rollsToGetBetter);
         msg.append(" rolls = ");
         if (veryLongTime && settingsUseDynamicTimeScale) {
             msg.append(badRoll ? worseYears : betterYears);
@@ -298,7 +310,6 @@ public class RollCalculatorGUI {
             msg.append(" lifetimes of the Sun, which is \n");
             msg.append(badRoll ? worseUniverseLife : betterUniverseLife);
             msg.append(" times the heat death of the Universe worth of time.");
-            msg.append("\n\nHey, you didn't happen to make that roll up, did you?");
         } else {
             msg.append(badRoll ? worseMinutes : betterMinutes);
             msg.append(" minutes \n(");
@@ -310,6 +321,7 @@ public class RollCalculatorGUI {
         msg.append("\nOf playing the game to get a roll at least as ");
         msg.append(badRoll ? "bad." : "good.");
 
+        if (veryLongTime) msg.append("\n\nHey, you didn't happen to make that roll up, did you?");
         return msg.toString();
     }
 
@@ -490,6 +502,19 @@ public class RollCalculatorGUI {
                     openWebPage("https://github.com/Mrunibro/RollCalculator");
                 }
             });
+            menu.add(menuItem);
+            menuItem = new JMenuItem("Changelog");
+            String changeLog = "Changelog\n\nVersion 1.0.0:\n" +
+                    "- Initial public release\n\n" +
+                    "Version 1.1.0\n" +
+                    "- Added persistent settings\n" +
+                    "- Added larger timescale for enormous rolls\n\n" +
+                    "Version 1.1.1\n" +
+                    "- Improved presenting of values\n" +
+                    "- 'Minutes' and 'rolls' are rounded in a better way\n" +
+                    "- Fixed incorrect display of subtext in statistics popup\n" +
+                    "- Fixed incorrect display of 'days' statistic";
+            menuItem.addActionListener((e) -> JOptionPane.showMessageDialog(null, changeLog, "changeLog", JOptionPane.INFORMATION_MESSAGE));
             menu.add(menuItem);
             menu.addSeparator();
             menuItem = new JMenuItem("Tool information & How to use");

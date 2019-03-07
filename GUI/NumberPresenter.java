@@ -1,6 +1,8 @@
 package GUI;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 /**
  * Takes values (int, double, etc.) and makes them presentable in String format:
  *
@@ -44,7 +46,7 @@ class NumberPresenter {
         int exponentPosition = value.indexOf('E');
         if (exponentPosition == -1) {
             //no exponent, only a (potentially) long decimal
-            return decimalScrubber(value, 3); //scrubs decimal length down to 3
+            return decimalScrubber(d, 4); //scrubs decimal length down to 3
         } else {
             //has an exponent (== val is at least 7 orders of magnitude), positive or negative
             if (value.charAt(exponentPosition+1) == '-'){ //negative exponent
@@ -59,45 +61,29 @@ class NumberPresenter {
     /**
      * Makes decimal strings on double values a specified maximum length
      * also correctly rounds based on the specified + 1-th decimal.
+     * If there are more non-decimal digits than maxLen, no decimal digits are returned instead (also rounded)
      *
      * @param maxLen maximum length to allow
-     * @param value the double value whose decimal to scrub, represented as String
+     * @param value the double value whose decimal to scrub
      *
-     * @precondition maxLen <= 18 (due to max value a long can hold)
-     * @throws IllegalArgumentException if precondition violated
-     *
-     * @return the double value with up to 3 decimal digits, and a properly rounded 3rd digit
+     * @return the double value with a specified amount of decimal digits
      */
-    private String decimalScrubber(String value, int maxLen) {
-        if (maxLen > 18) throw new IllegalArgumentException("Unsupported max scrubbing length");
-
-        int decimalDotPosition = value.indexOf('.');
-        String decimalString = value.substring(decimalDotPosition + 1);
-        if (decimalString.length() > maxLen){
-            //round maxLen-th decimal
-            //0s at the start are lost in upcoming conversion to long, need to account for this.
-            StringBuilder zeroes = new StringBuilder();
-            int i = 0;
-            while (decimalString.charAt(i) == '0'){
-                i++;
-                zeroes.append('0');
-            }
-            long decimals = Long.parseLong(decimalString.substring(0, maxLen + 1));
-            int sanityCheck = Long.toString(decimals).length() - 1; //expected length after rounding
-            decimalString = Long.toString((decimals + 5) / 10); //homebrew rounding trick
-            decimalString = zeroes.toString() + decimalString;
-            /*
-            It can bee the case that some decimal such as .999999997 becomes .1000 due to rounding
-            By way of incrementing the most significant digit beyond 9
-            If this is the case, the digit scrubbing is ignored by way of this sanity check (expected len != len)
-             */
-            if (decimalString.length() != zeroes.length() + sanityCheck) {
-                return value;
-            }
-            return value.substring(0, decimalDotPosition) + '.' + decimalString;
+    String decimalScrubber(double value, int maxLen) {
+        String strValue = Double.toString(value);
+        int decimalDotPos = strValue.indexOf('.'); // any double contains a dot
+        int offset = strValue.substring(0, decimalDotPos).length();
+        BigDecimal theValue = BigDecimal.valueOf(value);
+        if (offset >= maxLen){ //more non-decimal digits than we care for
+            //hence both scrubbing as well as comma-inserting is needed
+            theValue = theValue.setScale(0, RoundingMode.HALF_UP);
+            return tripleDigitCommaInsert(theValue.toString());
         } else {
-            //length is fine
-            return value;
+            theValue = theValue.setScale(maxLen - offset, RoundingMode.HALF_UP);
+            //check if decimal is all zeroes (divide by 1.0)
+            if (theValue.remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) == 0) {
+                theValue = theValue.setScale(1, BigDecimal.ROUND_UNNECESSARY);
+            }
+            return theValue.toString();
         }
     }
 
@@ -147,7 +133,7 @@ class NumberPresenter {
 
         int exponentAmount = Integer.parseInt(value.substring(exponentPos + 1)) * -1; //amount of shifts to perform
         value = value.substring(0, exponentPos); //value without exponent
-        value = decimalScrubber(value, 4); //cut down on decimal amount
+        value = decimalScrubber(Double.parseDouble(value), 3); //cut down on decimal amount
         //value is now 6 significant digits
         value = value.replace(".",""); //remove dot
         value = '.' + value; //acts as first shift
