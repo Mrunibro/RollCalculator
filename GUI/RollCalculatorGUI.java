@@ -32,7 +32,7 @@ public class RollCalculatorGUI {
     private static boolean settingsSystemLAF = prefs.getBoolean(PREF_SYSTEMLAF, false);
 
     private static final String bottomRollsLabelStartText = "Your rolls: ";
-    private static final String VERSION = "1.0.0"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
+    private static final String VERSION = "1.1.0"; //frankly, i've no idea how to dynamically keep track of this as potential updates go along
     private static JFrame frame;
 
     private final RollCalcGUIManager gui;
